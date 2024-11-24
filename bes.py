@@ -83,16 +83,17 @@ P = [101325 for x in range(0,721)]
 for i in range(0,len(angle)) : 
     if 0 < angle[i] < 180 :
         P[i]  = 101325 
+     if 181 < angle[i] < 360 : 
+        P[i] = P[i-1] *(V[i-1]/V[i])**(gamma)      
+    if angle[i] == 360 : 
+        P[i] = 1.13e7
+    if 360 < angle[i] < 540 : 
+        P[i] = P[i-1] *(V[i-1]/V[i])**(gamma)
     if angle[i] == 540 :
         P[i] = 5.94e5
         P[i]  = 101325 
-    if 181 < angle[i] < 360 : 
-        P[i] = P[i-1] *(V[i-1]/V[i])**(gamma)        
-    if 360 < angle[i] < 540 : 
-        P[i] = P[i-1] *(V[i-1]/V[i])**(gamma)
-    if angle[i] == 360 : 
-      #  P[i] = 1.93e6
-        P[i] = 1.13e7
+ 
+
 print("Pression à 0, 180, ,359,360 et 540° : ", P[0], P[180], P[359], P[360], P[540])
 
 # Afficher le graphique pour la témpérature simulée et la concentration de wo2
