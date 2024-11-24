@@ -39,7 +39,6 @@ plt.savefig('volume_isob.png')
 print("Volume à 0, 180, 360 et 540° : ", V[0], V[180], V[360], V[540])
 
 
-
 # Tracer la pression en fonction de l'angle du vilebrequin
 P = [101325 for x in range(0,721)]
 # Définition des lois de pression entre 0° et 720°
@@ -50,7 +49,7 @@ for i in range(0,len(angle)) :
         P[i] = P[i-1] *(V[i-1]/V[i])**(gamma)      
     if angle[i] == 360 : 
         P[i] = 7.5e6
-    if 360 < angle[i] < 540 : 
+    if 361 < angle[i] < 540 : 
         P[i] = P[i-1] *(V[i-1]/V[i])**(gamma)
     if angle[i] == 540 :
         P[i] = 5.94e5
