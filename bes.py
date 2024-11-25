@@ -50,9 +50,9 @@ for i in range(0,len(angle)) :
     if 0 < angle[i] < 180 :
         T[i]  = 300 
         P[i]  = 101325 
-        m[i] = P[i]*V[i]/(r*T[i])+ 3.87e-5 
+        m[i] = P[i]*V[i]/(r*T[i])*1.1
     if angle[i] == 180 :
-        m[i] = P[i]*V[i]/(r*T[i])+ 3.87e-5 
+        m[i] = P[i]*V[i]/(r*T[i])*1.1
     if 180 < angle[i] < 360 : 
         T[i] = T[i-1] *(V[i-1]/V[i])**(gamma-1)
         P[i] = P[i-1] *(V[i-1]/V[i])**(gamma)
@@ -70,7 +70,7 @@ for i in range(0,len(angle)) :
         P[i]  = 101325 
         m[i] = m[539]
     if 540 < angle[i] < 720 :
-        m[i] = P[i]*V[i]/(r*T[i])  + 3.87e-5
+        m[i] = P[i]*V[i]/(r*T[i])*1.1
 
    
 print("Température à 0, 180, 359,360 et 540° : ", T[0], T[180], T[359], T[360], T[540])

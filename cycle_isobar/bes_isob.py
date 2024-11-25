@@ -41,41 +41,40 @@ P = [101325 for x in range(0,721)]
 T = [300 for x in range(0,721)]
 m = [3.87e-5 for x in range(0,721)]
 cv = 1111.57
-E =-2800000
+E = -2800000
 volume = [0 for x in range(0,721)]
 
 for i in range(0,len(angle)) : 
     if 0 < angle[i] < 181 :
         P[i]  = 101325 
         T[i] = 300
-        m[i] = P[i]*V[i]/(r*T[i])+ 3.87e-5 
+        m[i] = P[i]*V[i]/(r*T[i])*1.1
     if 180 < angle[i] < 360 :
         P[i] = P[i-1] *(V[i-1]/V[i])**(gamma)
         T[i] = T[i-1] * (V[i-1]/V[i])**(gamma-1)
-        m[i] = P[i]*V[i]/(r*T[i])+ 3.87e-5 
+        m[i] = P[i]*V[i]/(r*T[i])*1.1
     if angle[i] == 360 :
         P[i] = 7.5e6
         m[i] = m[i-1]
-        T[i] = P[i]*V[i]/(r*m[i])
-        m_brulee = (T[359] - T[360])* m[i]*cv/E 
+        T[i] = P[i]*V[i]/(290*m[i])
+       
+    if 360 < angle[i] < 541 :
+        m[i] = m[360]
+        P[i] = P[360]
+        m_brulee = (T[i-1] - T[i])* m[i]*cv/E 
         m_restante = m[i] - m_brulee
         print("Masse brûlée à 360° : ", m_brulee)
         print("Masse restante à 360° : ", m_restante)
-    if 360 < angle[i] < 541 :
-        m[i] = m[i-1]
-        P[i] = P[i-1]
-        T[i] = T[i-1] - m_restante/m[i]*E/cv
+        T[i] = T[i-1] - m_restante*E/(m[i]*cv)
         volume[i] = m[i]*r*T[i]/P[i]
-        if V[i] < volume[i] :
-            V[i] = volume[i]
-            T[i] = T[i-1] *(V[i-1]/V[i])**(gamma-1)
-        else : 
+        T[i] = P[i]*V[i]/(r*m[i])
+        if V[i] > 4.24e-5 :
             P[i] = P[i-1] *(V[i-1]/V[i])**(gamma)
             T[i] = T[i-1] *(V[i-1]/V[i])**(gamma-1)
     if angle[i] == 540 :
         m[i]= m[i-1]
     if 540 < angle[i] < 720 :
-        m[i] = P[i]*V[i]/(r*T[i])  + 3.87e-5
+        m[i] = P[i]*V[i]/(r*T[i])*1.1
 plt.figure(1)
 plt.plot(angle, P, label='P', color='b')
 plt.xlabel('Angle (°)')
@@ -85,7 +84,6 @@ plt.grid()
 plt.title('Pression en fonction de l\'angle du vilebrequin')
 plt.savefig('isob_pressure.png')
 print("Pression à 0, 180, 360 et 540° : ", P[0], P[180], P[360], P[540])
-
 print("Température à 359,360,361, 540° : ", T[359], T[360], T[361], T[540]) 
 
 plt.figure(2)
@@ -117,4 +115,9 @@ plt.grid()
 plt.title('Cycle thermodynamique à combustion isochore puis isobare')
 plt.savefig('isob_cycle.png')
 
-plt.show()
+plt.figure(5)
+plt.plot(angle,V, color='red')
+plt.plot(angle,volume, color='red')
+plt.xlabel('Angle (°)')
+plt.ylabel('Volume (m3)')
+plt.grid()
