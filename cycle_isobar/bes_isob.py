@@ -49,16 +49,15 @@ for i in range(0,len(angle)) :
         P[i]  = 101325 
         T[i] = 300
         m[i] = P[i]*V[i]/(r*T[i])*1.1
-    if 180 < angle[i] < 360 :
+    elif 180 < angle[i] < 360 :
         P[i] = P[i-1] *(V[i-1]/V[i])**(gamma)
         T[i] = T[i-1] * (V[i-1]/V[i])**(gamma-1)
         m[i] = P[i]*V[i]/(r*T[i])*1.1
-    if angle[i] == 360 :
+    elif angle[i] == 360 :
         P[i] = 7.5e6
         m[i] = m[i-1]
         T[i] = P[i]*V[i]/(290*m[i])
-       
-    if 360 < angle[i] < 541 :
+    elif 360 < angle[i] < 541 :
         m[i] = m[360]
         P[i] = P[360]
         m_brulee = (T[i-1] - T[i])* m[i]*cv/E 
@@ -71,9 +70,9 @@ for i in range(0,len(angle)) :
         if V[i] > 4.24e-5 :
             P[i] = P[i-1] *(V[i-1]/V[i])**(gamma)
             T[i] = T[i-1] *(V[i-1]/V[i])**(gamma-1)
-    if angle[i] == 540 :
+    elif angle[i] == 540 :
         m[i]= m[i-1]
-    if 540 < angle[i] < 720 :
+    elif 540 < angle[i] < 720 :
         m[i] = P[i]*V[i]/(r*T[i])*1.1
 plt.figure(1)
 plt.plot(angle, P, label='P', color='b')
