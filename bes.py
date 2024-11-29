@@ -76,12 +76,21 @@ t_angle = ("0°→180°  : Admission\n"
             "360° : Combustion\n"
             "360°→540° : Détente\n"
             "540 → 720° : Échappement" )
+
 indices = [1,2,3,4,5,6]
 angles_points = [180, 359, 360, 539, 540, 720] 
 V_points = [ V[180], V[359],V[360],V[539],V[540], V[720]]
 P_points = [ P[180], P[359],P[360],P[539],P[540], P[720]]
 m_points = [ m[180], m[359],m[360],m[539],m[540], m[720]]
 T_points = [ T[180], T[359],T[360],T[539],T[540], T[720]]
+
+indices_vol = [6,1,2,3,4,5]
+angles_vol = [0, 180, 360,360, 540, 720]
+points_vol = [V[0], V[180], V[360],V[360], V[540], V[720]]
+pression_vol = [P[0], P[180], P[360],P[360], P[540], P[720]]
+masse_vol = [m[0], m[180], m[360],m[360], m[540], m[720]]
+temperature_vol = [T[0], T[180], T[360],T[360], T[540], T[720]]
+
 
 plt.figure(0)
 plt.plot(angle, V, label='V', color='black')
@@ -90,11 +99,13 @@ plt.xlabel('Angle (°)')
 plt.ylabel('Volume (m3)')
 plt.ticklabel_format(axis='y', style='sci', scilimits=(0, 0))
 plt.grid()
+for i, (x, y) in enumerate(zip(angles_vol, points_vol)):
+    plt.annotate(f'{indices_vol[i]}', (x, y), textcoords="offset points", xytext=(5, 5), ha='center')
 plt.title('Volume en fonction de l\'angle du vilebrequin')
 plt.savefig('volume.png')
 print("Volume à 0, 180, 360 et 540° : ", V[0], V[180], V[360], V[540])
 
-# Afficher le graphique pour la témpérature simulée et la concentration de wo2
+# Tracer la température en fonction de l'angle du vilebrequin
 plt.figure(1)
 plt.plot(angle, T, label='T', color='r')
 plt.scatter(angles_points, T_points, color='black', zorder=5, label='Points spécifiques',s=10)
@@ -153,22 +164,15 @@ rounded_positions = [round(float(pos), 1) for pos in angle]
 plt.xticks(ticks=angle[::len(angle)//10 if len(angle)//10 > 0 else 1])
 plt.savefig("m_angle.png")
 
-plt.show()
+#plt.show()
+
+P_1 = 101325
+Q_star = 40.3e6
+T_1 = 300
+cv = 1111
+P_mep = P_1*(Q_star/(cv*T_1))*(1/gamma-1)*(r_c/(r_c-1))*(1-1/(r_c)**(gamma-1))
+print("Pression moyenne effective : ", P_mep)
 
 
-
-# Calcul du volume en fonction de l'angle du vilebrequin
-# Deuxième calcul du volume
-#volume = [V_d*(np.sin(np.radians(0.5*x)))+V_c for x in range(0,721)]
-#volume = [V_d*z[i]*cos(np.radians(i+180))*np.pi*R**2+V_c for i in range(0,721)]
-#volume = [z[i]*R**2*np.pi*np.cos(np.radians(i*0.5))+V_c for i in range(0,721)]
-#volume = [V_d*np.sin(np.radians(i))+V_c for i in range(0,721)]
-#V = V_c*(1+0.5*(r_c-1)*(3.5+1-np.cos(angle)-(3.5**2-(np.sin(angle))**2)**0.5))
-
-
-#V = [V_c+V_d*abs(np.sin(np.radians(0.5*x))) for x in range(0,720,720//5)]
-#print(V)
-
-# tracer la fonction sinus de 0° à 720°
-#V = V_d*abs(np.sin(np.radians(0.5*angle)))+V_c
-#V = V_d*0.5*(1-np.cos(np.radians(angle)))+V_c
+W = np.trapz(P, V) 
+print("Travail total (J) : ", W)
