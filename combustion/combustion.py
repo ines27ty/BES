@@ -55,7 +55,6 @@ while r_t < 0.9*R_p :
 
 
     # changement des valeurs de variables avant l'itération suivante
-
     P_t = P_dt
     T_gb_t = T_gb_dt
     r_t = r_dt
