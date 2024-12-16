@@ -19,9 +19,9 @@ R = L/2
 # Définition de la vitesse à partir de la position 
 angle = np.linspace(0, 720, 721)
 theta= np.radians(angle)
-x = R * np.cos(np.radians(angle))
-y = R * np.sin(np.radians(angle))
-z = np.sqrt(x**2 + y**2)
+#x = R * np.cos(np.radians(angle))
+#y = R * np.sin(np.radians(angle))
+#z = np.sqrt(x**2 + y**2)
 
 # Calcul du volume en fonction de l'angle
 term = 3.5**2 - np.sin(theta)**2
