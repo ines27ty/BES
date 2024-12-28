@@ -10,8 +10,8 @@ t = 0
 
 # conditions initiales
 P0 = 101325        # pression initiale des gaz frais (Pa)
-T0 = 298.15         # température initiale des gaz frais
-P1 = 101325*19.3      # pression avant la combustion (Pa)
+T0 = 300         # température initiale des gaz frais
+P1 = 19.3*101325     # pression avant la combustion (Pa)
 T1 = 572.47          # température avant la combustion (K)
 R0 = 0.001          # rayon initiale de la boule allumée (m)
 R_p = 0.05          # rayon du piston (m)
@@ -55,13 +55,17 @@ print("sL0 (m/s) dans la thèse= ", sL0_these)
 # Gaz frais : air + c8h18 + n2 à 2000K
 rho_c8h18 = 13.3
 rho_air = 0.1741
-rho_n2 = 0.25
+rho_n2 = 0.259
 y_c8h18 = 0.0625
 y_air = 0.9375
 y_n2 = 0.71512
 
-rho_gf = rho_c8h18*y_c8h18 + rho_air*y_air + rho_n2*y_n2
-print("rho_gf calculé = ", rho_gf)
+M_gf = 0.03041748131
+r_gf = 8.314 / M_gf
+rho_gf = P1 / (r_gf * T1)
+print("masse volumique des gaz frais (kg/m^3) = ", rho_gf)        # masse volumique des gaz frais à T1 et P1
+
+#rho_gf = rho_c8h18*y_c8h18 + rho_air*y_air + rho_n2*y_n2
 
 # Gaz brûlés : h2o + co2 + n2 à 2000 K
 rho_h2o = 2.09
@@ -71,14 +75,18 @@ y_h2o = 0.0885
 y_co2 = 0.1923
 y_n2 = 0.7192
 
-r_mel = 8.314 / 0.03041748131
-r_bru = 290.7628415
-rho_gb = rho_h2o*y_h2o + rho_co2*y_co2 + rho_n2*y_n2
-print("rho_gb calculé = ", rho_gb)
+M_gb = 0.02859               # masse molaire du mélange des gaz brûlés
+r_gb = 8.314 / M_gb           # constante des gaz brûlés 
+rho_gb = P1 / (r_gb * T1)
+print("masse volumique des gaz brûlés (kg/m^3) = ", rho_gb)        # masse volumique des gaz brûlés à T1 et P1
+
+#rho_gb = rho_h2o*y_h2o + rho_co2*y_co2 + rho_n2*y_n2
 #rho_gf = 1.393919518
 #rho_gb = 1.7803e1
 
+
 # Variables en t 
+i=0                      # compteur d'itérations
 sL0 = sL0_livre          # à changer si on veut celle du LIVRE ou de la THESE
 sL_t = sL0               # vitesse de flamme à l'instant t
 T_gf_t = T1              # température des gaz frais (avant la combustion)
@@ -86,39 +94,50 @@ T_gb_t = 2839.52         # température de fin de combustion (calculée pour iso
 P_t = P1                 # pression à l'instant t
 r_t = R0                 # m rayon initial de la boule
 vb_t = 4/3*np.pi*r_t**3  # m^3 volume de la boule
-QF = 44.7e6              # J/kg QLHV pouvoir calorifique du carburant
-i=0                 
 masse_gb = vb_t*rho_gb              # masse des gaz brûlés 
-masse_gf = (V -vb_t)*rho_gf        # masse des gaz frais avec comme volume le cylindre du piston moins la boule
+masse_gf = (V - vb_t)*rho_gf        # masse des gaz frais avec comme volume le cylindre du piston moins la boule
 masse_tot = masse_gb + masse_gf                 # masse totale des gaz
-print("masse totale (kg)= ", masse_tot)
-print("masse gaz frais (kg)= ", masse_gf)
 print("masse gaz brûlés (kg)= ", masse_gb)
+print("masse gaz frais (kg)= ", masse_gf)
+print("masse totale (kg)= ", masse_tot)
+QF = 44.7e6              # J/kg QLHV pouvoir calorifique du carburant
+
 
 # variables à stocker
-t_tot = [0]
-sL_tot = [sL_t]
-T_gf_tot = [T1]
-T_gb_tot = [2839.52]
-P_tot = [P1]
-r_tot = [R0]  
-rho_gb_tot = [rho_gb]
-rho_gf_tot = [rho_gf]
-masse_gb_tot = [masse_gb]
-masse_total = [masse_tot]
-masse_gf_tot = [masse_gf]
+#t_tot = [0]
+#sL_tot = [sL_t]
+#T_gf_tot = [T_gf_t]
+#T_gb_tot = [T_gb_t]
+#P_tot = [P_t]
+#r_tot = [r_t]  
+#rho_gb_tot = [rho_gb]
+#rho_gf_tot = [rho_gf]
+#masse_gb_tot = [masse_gb]
+#masse_total = [masse_tot]
+#masse_gf_tot = [masse_gf]
 
-while r_t < 0.9*R_p :
+t_tot = []
+sL_tot = []
+T_gf_tot = []
+T_gb_tot = []
+P_tot = []
+r_tot = []  
+rho_gb_tot = []
+rho_gf_tot = []
+masse_gb_tot = []
+masse_total = []
+masse_gf_tot = []
+while r_t < 0.9*R_p :                   # mmasse_tot > 0
     T_gb_dt = 2839.52 + (1+1091.5625/1423.522842) * (T_gf_t - T0)
     P_dt = P_t + dt * (gamma-1)/V * QF * (4*np.pi * r_t**2 * rho_gf * sL_t*YF0)
-    r_dt = r_t + dt * (rho_gf/rho_gb) * sL0*(T_gf_t/T0)**alpha * (P_t/P0)**beta
-    #r_dt = r_t + dt * (rho_gf/rho_b) * sL_t
+    #r_dt = r_t + dt * (rho_gf/rho_gb) * sL0*(T_gf_t/T0)**alpha * (P_t/P0)**beta
+    r_dt = r_t + dt * (rho_gf/rho_gb) * sL_t
     sL_dt = sL0 * (T_gf_t/T0)**alpha * (P_t/P0)**beta
     T_gf_dt = T_gf_t * ((R_p ** 3 - r_t ** 3) / (R_p ** 3 - r_dt ** 3)) ** (gamma - 1)
     vb_t = 4/3*np.pi*r_t**3
 
-    rho_gf = P_dt / (r_mel * T_gf_dt)
-    rho_gb = P_dt / (r_bru * T_gb_dt)
+    rho_gf = P_dt / (r_gf * T_gf_dt)
+    rho_gb = P_dt / (r_gb * T_gb_dt)
     masse_gb = vb_t*rho_gb
     masse_gf = (V -vb_t)*rho_gf     
     #masse_gf  = rho_gf * sL_t  * 4*np.pi*r_t**2
@@ -150,6 +169,20 @@ while r_t < 0.9*R_p :
 print('temps de combustion : ' + str(t))
 print('itérations : ' + str(i))
 print('vitesse de flamme :' + str(sL_tot[-1]))
+
+
+# calcul angle nécessaire à la combustion
+
+N_ralenti = 1200 #tr/min
+N_nominal = 12000 #tr/min
+
+angle_ralenti = 1200 / 60 * t * 360 #en °
+angle_nominal = 12000 / 60 * t * 360 #en °
+
+print('Angle nécessaire à la combustion (ralenti) : ' + str(angle_ralenti))
+print('Angle nécessaire à la combustion (nominal) : ' + str(angle_nominal))
+
+
 # Tracé des courbes
 plt.figure(1)
 plt.loglog(t_tot, P_tot)
@@ -223,18 +256,6 @@ plt.ylabel('vitesse de flamme (m/s)')
 plt.title('vitesse de flamme en fonction du temps')
 plt.grid()
 plt.savefig('vitesse_flamme.png')
-
-
-# calcul angle nécessaire à la combustion
-
-N_ralenti = 1200 #tr/min
-N_nominal = 12000 #tr/min
-
-angle_ralenti = 1200 / 60 * t * 360 #en °
-angle_nominal = 12000 / 60 * t * 360 #en °
-
-print('Angle nécessaire à la combustion (ralenti) : ' + str(angle_ralenti))
-print('Angle nécessaire à la combustion (nominal) : ' + str(angle_nominal))
 
 reponse = input("Afficher les graphes ? (y/n) : ").strip().lower()
 
