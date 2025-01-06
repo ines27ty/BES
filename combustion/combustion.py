@@ -89,7 +89,8 @@ print("masse volumique des gaz brûlés (kg/m^3) = ", rho_gb)        # masse vol
 i=0                      # compteur d'itérations
 sL0 = sL0_livre          # à changer si on veut celle du LIVRE ou de la THESE
 T_gf_t = T1              # température des gaz frais (avant la combustion)
-T_gb_t = 2839.52         # température de fin de combustion (calculée pour isochore)
+#T_gb_t = 2839.52         # température de fin de combustion (calculée pour isochore)
+T_gb_t = 2533.11 + 1.03 * (T_gf_t - T0)
 P_t = P1                 # pression à l'instant t
 r_t = R0                 # m rayon initial de la boule
 sL_t = sL0*(T_gf_t/T0)**alpha * (P_t/P0)**beta               # vitesse de flamme à l'instant t
@@ -97,6 +98,8 @@ vb_t = 4/3*np.pi*r_t**3  # m^3 volume de la boule
 masse_gb = vb_t*rho_gb              # masse des gaz brûlés 
 masse_gf = (V - vb_t)*rho_gf        # masse des gaz frais avec comme volume le cylindre du piston moins la boule
 masse_tot = masse_gb + masse_gf                 # masse totale des gaz (qui va rester constante au cours de la combustion)
+rho_gb = P_t / (r_gb * T_gb_t)
+print("masse volumique des gaz brûlés (kg/m^3) = ", rho_gb)        # masse volumique des gaz brûlés à T1 et P1
 print("masse gaz brûlés (kg)= ", masse_gb)
 print("masse gaz frais (kg)= ", masse_gf)
 print("masse totale (kg)= ", masse_tot)
@@ -187,7 +190,7 @@ print('Angle nécessaire à la combustion (nominal) : ' + str(angle_nominal))
 
 # Tracé des courbes
 plt.figure(1)
-plt.loglog(t_tot, P_tot)
+plt.plot(t_tot, P_tot, color = 'blue')
 plt.xlabel('temps (s)')
 plt.ylabel('pression (Pa)')
 plt.grid()
@@ -195,7 +198,7 @@ plt.title('pression en fonction du temps')
 plt.savefig('pression.png')
 
 plt.figure(2)
-plt.loglog(t_tot, T_gb_tot)
+plt.plot(t_tot, T_gb_tot, color = 'brown')
 plt.xlabel('temps (s)')
 plt.ylabel('température des gaz brûlés (K)')
 plt.title('température des gaz brûlés en fonction du temps')
@@ -203,7 +206,7 @@ plt.grid()
 plt.savefig('temp_gb.png')
 
 plt.figure(3)
-plt.loglog(t_tot, T_gf_tot)
+plt.plot(t_tot, T_gf_tot, color = 'red')
 plt.xlabel('temps (s)')
 plt.ylabel('température des gaz frais (K)')
 plt.title('température des gaz frais en fonction du temps')
@@ -227,9 +230,9 @@ ax.xaxis.get_major_formatter().set_powerlimits((0, 0))  # Force l'affichage scie
 plt.savefig('masse_loglog.png')
 
 plt.figure(5)
-plt.plot(t_tot, masse_gf_tot, label='gaz frais')
-plt.plot(t_tot, masse_gb_tot, label='gaz brûlés')
-plt.plot(t_tot, masse_total, label='total')
+plt.plot(t_tot, masse_gf_tot, label='gaz frais',color='orange')
+plt.plot(t_tot, masse_gb_tot, label='gaz brûlés',color='brown')
+plt.plot(t_tot, masse_total, label='total', color = 'black')
 plt.xlabel('temps (s)')
 plt.ylabel('masse des gaz (kg)')
 plt.title('masse des gaz en fonction du temps')
@@ -244,7 +247,7 @@ plt.savefig('masse.png')
 
 
 plt.figure(6)
-plt.loglog([t_tot[i]*1000 for i in range(len(t_tot))], [r_tot[i]*1000 for i in range(len(r_tot))])
+plt.plot([t_tot[i]*1000 for i in range(len(t_tot))], [r_tot[i]*1000 for i in range(len(r_tot))], color = "black")
 plt.xlabel('temps (ms)')
 plt.ylabel('rayon de la boule (mm)')
 plt.title('rayon de la boule en fonction du temps')
@@ -252,10 +255,10 @@ plt.grid()
 plt.savefig('rayon.png')
 
 plt.figure(7)
-plt.loglog(t_tot, sL_tot)
+plt.plot(t_tot, sL_tot, color = 'green')
 plt.xlabel('temps (s)')
-plt.ylabel('vitesse de flamme (m/s)')
-plt.title('vitesse de flamme en fonction du temps')
+plt.ylabel('vitesse de flamme sL (m/s)')
+plt.title('vitesse de flamme laminaire en fonction du temps')
 plt.grid()
 plt.savefig('vitesse_flamme.png')
 
@@ -266,5 +269,28 @@ plt.ylabel('vitesse de flamme (m/s)')
 plt.title('vitesse de flamme en fonction du rayon de la boule')
 plt.grid()
 plt.savefig('vitesse_flamme_rayon.png')
+
+
+plt.figure(9)
+plt.plot(t_tot, rho_gf_tot, label='gaz frais', color='orange')
+plt.xlabel('temps (s)')
+plt.ylabel('masse volumique des gaz frais (kg)')
+plt.title('masse volumique des gaz frais en fonction du temps')
+plt.legend()
+plt.grid()
+plt.savefig('rho_gf.png')
+
+
+
+
+plt.figure(10)
+plt.plot(t_tot, rho_gb_tot, label='gaz brûlés', color='brown')
+plt.xlabel('temps (s)')
+plt.ylabel('masse volumique des gaz brûles (kg)')
+plt.title('masse volumique des gaz brûles en fonction du temps')
+plt.legend()
+plt.grid()
+plt.savefig('rho_gb.png')
+
 
 plt.show()
