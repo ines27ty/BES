@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import ScalarFormatter
 import csv
+import os 
 # variables temps
 dt = 0.00001
 tf = 10
@@ -103,13 +104,18 @@ print("r_gf = ", r_gf)
 
 # Variables en t 
 i=0                                                          # compteur d'itérations
-sL0 = sL0_livre                                               # à changer si on veut celle du LIVRE ou de la THESE
+sL0 = sL0_these                                               # à changer si on veut celle du LIVRE ou de la THESE
 T_gf_t = T1                                                  # température des gaz frais (avant la combustion)
 #T_gb_t = 2839.52                                             # température de fin de combustion (calculée pour isochore)
 T_gb_t = 2533.11 + 1.03 * (T_gf_t - T0)
 P_t = P1                                                     # pression à l'instant t
 r_t = R0                                                     # m rayon initial de la boule
-sL_t = sL0*(T_gf_t/T0)**alpha * (P_t/P0)**beta               # vitesse de flamme à l'instant t                                         
+sL_t = sL0*(T_gf_t/T0)**alpha * (P_t/P0)**beta               # vitesse de flamme à l'instant t        
+
+# Vitesse de flamme turbulente (m/s)
+u_fluct = 0.3                                               # m/s u' fluctuation de vitesse
+sT_t = sL_t * (1+u_fluct/sL_t)                               # vitesse de flamme turbulente à l'instant t
+
 vb_t = 4/3*np.pi*r_t**3                                      # m^3 volume de la boule
 v_t = 0                                                       # m/s vitesse
 masse_gb = vb_t*rho_gb                                        # masse des gaz brûlés 
@@ -125,6 +131,7 @@ QF = 44.7e6                                                       # J/kg QLHV po
 # variables à stocker
 t_tot = [0]
 sL_tot = [sL_t]
+sT_tot = [sT_t]
 T_gf_tot = [T_gf_t]
 T_gb_tot = [T_gb_t]
 P_tot = [P_t]
@@ -136,20 +143,18 @@ masse_total = [masse_tot]
 masse_gf_tot = [masse_gf]
 vitesses = [v_t]
 
-while r_t < 0.9*R_p :                   # masse_tot > 0
-    #T_gb_dt = 2839.52 + (1+1091.5625/1423.522842) * (T_gf_dt - T0)
+while r_t < 0.9*R_p :                   
     T_gb_dt = 2533.11 + 1.03 * (T_gf_t - T0)
-    P_dt = P_t + dt * (gamma-1)/V * QF * (4*np.pi * r_t**2 * rho_gf * sL_t*YF0)
-    #r_dt = r_t + dt * (rho_gf/rho_gb) * sL0*(T_gf_t/T0)**alpha * (P_t/P0)**beta
-    r_dt = r_t + dt * (rho_gf/rho_gb) * sL_t
+    P_dt = P_t + dt * (gamma-1)/V * QF * (4*np.pi * r_t**2 * rho_gf * sT_t*YF0)
+    r_dt = r_t + dt * (rho_gf/rho_gb) * sT_t
     sL_dt = sL0 * (T_gf_t/T0)**alpha * (P_t/P0)**beta
+    sT_dt = sL_dt * (1+u_fluct/sL_dt)
     T_gf_dt = T_gf_t * ((R_p ** 3 - r_t ** 3) / (R_p ** 3 - r_dt ** 3)) ** (gamma - 1)
     vb_t = 4/3*np.pi*r_t**3
-    v_t = sL_dt * rho_gf / rho_gb
+    v_t = sT_dt * rho_gf / rho_gb
 
     masse_gb = vb_t*rho_gb
     masse_gf = masse_tot - vb_t*rho_gb     
-    #masse_gf  = rho_gf * sL_t  * 4*np.pi*r_t**2
     masse_tot = masse_gb + masse_gf
     i+=1
     rho_gf = P_dt / (r_gf * T_gf_dt)
@@ -159,6 +164,7 @@ while r_t < 0.9*R_p :                   # masse_tot > 0
     T_gb_t = T_gb_dt
     r_t = r_dt
     sL_t = sL_dt
+    sT_t = sT_dt
     T_gf_t = T_gf_dt
     t += dt
     
@@ -168,6 +174,7 @@ while r_t < 0.9*R_p :                   # masse_tot > 0
     T_gf_tot.append(T_gf_t)
     T_gb_tot.append(T_gb_t)
     sL_tot.append(sL_t)
+    sT_tot.append(sT_t)
     r_tot.append(r_t)
     rho_gb_tot.append(rho_gb)
     rho_gf_tot.append(rho_gf)
@@ -178,48 +185,96 @@ while r_t < 0.9*R_p :                   # masse_tot > 0
 #print('temp gaz frais : ' + str(T_gf_tot))    
 print('temps de combustion : ' + str(t))
 print('itérations : ' + str(i))
-print('vitesse de flamme :' + str(sL_tot[-1]))
-
+print('vitesse de flamme laminaire :' + str(sL_tot[-1]))
+print('vitesse de flamme turbulente :' + str(sT_tot[-1]))
 
 # calcul angle nécessaire à la combustion
 
-N_ralenti = 1500 #tr/min
-N_nominal = 15000 #tr/min
+N_ralenti = 1200 #tr/min
+N_nominal = 12000 #tr/min
 
-angle_ralenti = 1500 / 60 * t * 360 #en °
-angle_nominal = 15000 / 60 * t * 360 #en °
+angle_ralenti = 1200 / 60 * t * 360 #en °
+angle_nominal = 12000 / 60 * t * 360 #en °
 
 print('Angle nécessaire à la combustion (ralenti) : ' + str(angle_ralenti))
 print('Angle nécessaire à la combustion (nominal) : ' + str(angle_nominal))
 
 
+
+# Lire les lignes du fichier
+filename = 'combustion_lam.csv'
+if os.path.exists(filename):
+    with open(filename, 'r') as fichier:
+        lines = fichier.readlines()
+else:
+    raise FileNotFoundError(f"Le fichier {filename} n'existe pas.")
+
+# Initialiser des listes pour les positions et pressions
+t_tot_lam = []
+P_tot_lam = []
+T_gf_tot_lam = []
+T_gb_tot_lam = []
+sL_tot_lam = []
+r_tot_lam = []
+rho_gb_tot_lam = []
+rho_gf_tot_lam = []
+masse_gb_tot_lam = []
+masse_gf_tot_lam = []
+masse_total_lam = []
+
+# Parcourir chaque ligne du fichier
+for line in lines:
+    line = line.strip()  # Supprimer les espaces en début et fin de ligne
+    values = line.split(',')  # Diviser la ligne en une liste de valeurs
+    
+    # Ajouter les valeurs à leurs listes respectives
+    t_tot_lam.append(float(values[0]))
+    P_tot_lam.append(float(values[1]))
+    T_gf_tot_lam.append(float(values[2]))
+    T_gb_tot_lam.append(float(values[3]))
+    sL_tot_lam.append(float(values[4]))
+    r_tot_lam.append(float(values[5]))
+    rho_gb_tot_lam.append(float(values[6]))
+    rho_gf_tot_lam.append(float(values[7]))
+    masse_gb_tot_lam.append(float(values[8]))
+    masse_gf_tot_lam.append(float(values[9]))
+    masse_total_lam.append(float(values[10]))
+
+
 # Tracé des courbes
 plt.figure(1)
-plt.plot(t_tot, P_tot, color = 'blue')
+plt.plot(t_tot, P_tot, color = 'blue',label='turbulent')
+plt.plot(t_tot_lam, P_tot_lam, color = 'royalblue', linestyle='dashed',label='laminaire')
 plt.xlabel('temps (s)')
 plt.ylabel('pression (Pa)')
 plt.grid()
+plt.legend()
 plt.title('pression en fonction du temps')
 plt.savefig('pression.png')
 
 plt.figure(2)
-plt.plot(t_tot, T_gb_tot, color = 'brown')
+plt.plot(t_tot, T_gb_tot, color = 'saddlebrown',label='turbulent')
+plt.plot(t_tot_lam, T_gb_tot_lam, color = 'darkgoldenrod', linestyle='dashed',label='laminaire')
 plt.xlabel('temps (s)')
 plt.ylabel('température des gaz brûlés (K)')
 plt.title('température des gaz brûlés en fonction du temps')
 plt.grid()
+plt.legend()
 plt.savefig('temp_gb.png')
 
 plt.figure(3)
-plt.plot(t_tot, T_gf_tot, color = 'red')
+plt.plot(t_tot, T_gf_tot, color = 'red',label='turbulent')
+plt.plot(t_tot_lam, T_gf_tot_lam, color = 'lightcoral', linestyle='dashed',label='laminaire')
 plt.xlabel('temps (s)')
 plt.ylabel('température des gaz frais (K)')
 plt.title('température des gaz frais en fonction du temps')
 plt.grid()
+plt.legend()
 plt.savefig('temp_gf.png')
 
 plt.figure(4)
 plt.plot(sL_tot, r_tot, color = 'green')
+plt.plot(sL_tot_lam, r_tot_lam, color = 'lime', linestyle='dashed')
 plt.xlabel('vitesse de flamme (m/s)')
 plt.ylabel('rayon de la boule (m)')
 plt.title('rayon de la boule en fonction de la vitesse de flamme')
@@ -231,9 +286,12 @@ plt.figure(5)
 plt.plot(t_tot, masse_gf_tot, label='gaz frais',color='orange')
 plt.plot(t_tot, masse_gb_tot, label='gaz brûlés',color='brown')
 plt.plot(t_tot, masse_total, label='total', color = 'black')
+#plt.plot(t_tot_lam, masse_gf_tot_lam, label='gaz frais laminaire',color='orange', linestyle='dashed')
+#plt.plot(t_tot_lam, masse_gb_tot_lam, label='gaz brûlés laminaire',color='brown', linestyle='dashed')
+#plt.plot(t_tot_lam, masse_total_lam, label='total laminaire', color = 'black', linestyle='dashed')
 plt.xlabel('temps (s)')
 plt.ylabel('masse des gaz (kg)')
-plt.title('masse des gaz en fonction du temps')
+plt.title('masse des gaz en fonction du temps (turbulent)')
 plt.legend()
 plt.grid()
 # Formatage en écriture scientifique pour l'axe des x
@@ -245,23 +303,19 @@ plt.savefig('masse.png')
 
 
 plt.figure(6)
-plt.plot([t_tot[i]*1000 for i in range(len(t_tot))], [r_tot[i]*1000 for i in range(len(r_tot))], color = "black")
+plt.plot([t_tot[i]*1000 for i in range(len(t_tot))], [r_tot[i]*1000 for i in range(len(r_tot))], color = "black",label = 'turbulent')
+plt.plot([t_tot_lam[i]*1000 for i in range(len(t_tot_lam))], [r_tot_lam[i]*1000 for i in range(len(r_tot_lam))], color = "grey", linestyle='dashed', label = 'laminaire')
 plt.xlabel('temps (ms)')
 plt.ylabel('rayon de la boule (mm)')
 plt.title('rayon de la boule en fonction du temps')
 plt.grid()
+plt.legend()
 plt.savefig('rayon.png')
 
-plt.figure(7)
-plt.plot(t_tot, sL_tot, color = 'green')
-plt.xlabel('temps (s)')
-plt.ylabel('vitesse de flamme sL (m/s)')
-plt.title('vitesse de flamme laminaire en fonction du temps')
-plt.grid()
-plt.savefig('vitesse_flamme.png')
 
 plt.figure(8)
-plt.plot(r_tot, sL_tot)
+plt.plot(r_tot_lam, sL_tot_lam, color = 'red',label='vitesse de flamme laminaire',linestyle='dashed')
+plt.plot(r_tot, sT_tot, color = 'blue', label='vitesse de flamme turbulente')
 plt.xlabel('rayon de la boule (m)')
 plt.ylabel('vitesse de flamme (m/s)')
 plt.title('vitesse de flamme en fonction du rayon de la boule')
@@ -269,7 +323,8 @@ plt.grid()
 plt.savefig('vitesse_flamme_rayon.png')
 
 plt.figure(9)
-plt.plot(t_tot, rho_gf_tot, label='gaz frais', color='orange')
+plt.plot(t_tot, rho_gf_tot, label='gaz frais', color='red')
+plt.plot(t_tot_lam, rho_gf_tot_lam, label='gaz frais laminaire', color='lightcoral', linestyle='dashed')
 plt.xlabel('temps (s)')
 plt.ylabel('masse volumique des gaz frais (kg)')
 plt.title('masse volumique des gaz frais en fonction du temps')
@@ -278,13 +333,24 @@ plt.grid()
 plt.savefig('rho_gf.png')
 
 plt.figure(10)
-plt.plot(t_tot, rho_gb_tot, label='gaz brûlés', color='brown')
+plt.plot(t_tot, rho_gb_tot, label='gaz brûlés', color='saddlebrown')
+plt.plot(t_tot_lam, rho_gb_tot_lam, label='gaz brûlés laminaire', color='darkgoldenrod', linestyle='dashed')
 plt.xlabel('temps (s)')
 plt.ylabel('masse volumique des gaz brûles (kg)')
 plt.title('masse volumique des gaz brûles en fonction du temps')
 plt.legend()
 plt.grid()
 plt.savefig('rho_gb.png')
+
+plt.figure(11)
+plt.plot(t_tot, sT_tot, color='brown',label='sT')
+plt.plot(t_tot_lam, sL_tot_lam, color='orange',label='sL')
+plt.xlabel('temps (s)')
+plt.ylabel('vitesse de flamme (m/s)')
+plt.title('vitesse de flamme en fonction du temps')
+plt.legend()
+plt.grid()
+plt.savefig('vitesse_flamme_turbulente.png')
 
 print("taille de r_tot = ", len(r_tot))
 # Calcul de dr_dt
@@ -305,32 +371,10 @@ for r_ratio in r_ratio_values:
     u_ratio_values.append(u_ratio)
 
 # Tracer le graphique
-plt.figure(11)
+plt.figure(12)
 plt.plot(r_ratio_values, u_ratio_values, color='blue')
 plt.xlabel('R/r(t)')
 plt.ylabel('u / dr/dt')
 plt.grid()
 plt.savefig('u_ratio.png')
-
-
-# Exporter les données dans un fichier .csv
-
-# Nom du fichier CSV
-filename = "combustion_lam.csv"
-
-# Écriture des données dans un fichier CSV
-with open(filename, mode='w', newline='') as file:
-    writer = csv.writer(file)
-    # Écrire l'en-tête
-    writer.writerow(["t_tot", "P_tot", "T_gf_tot", "T_gb_tot", "sL_tot", "r_tot", 
-                     "rho_gb_tot", "rho_gf_tot", "masse_gb_tot", "masse_gf_tot", "masse_total"])
-    # Écrire les données
-    for i in range(len(t_tot)):
-        writer.writerow([t_tot[i], P_tot[i], T_gf_tot[i], T_gb_tot[i], sL_tot[i], 
-                         r_tot[i], rho_gb_tot[i], rho_gf_tot[i], masse_gb_tot[i], 
-                         masse_gf_tot[i], masse_total[i]])
-
-print(f"Les données ont été écrites dans le fichier {filename}.")
-
-
-plt.show()
+#plt.show()

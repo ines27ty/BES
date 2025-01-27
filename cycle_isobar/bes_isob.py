@@ -120,7 +120,7 @@ plt.savefig('isob_pressure.png')
 
 print("Pression à 0, 180, 359, 360 et 540° : ", P[0], P[180], P[359], P[360], P[540])
 print("Volume à 0, 180, 359, 360 et 540° : ", V[0], V[180], V[359], V[360], V[540])
-print("Température à 0, 180, 359, 360 et 540° : ", T[0], T[180], T[359], T[360], T[540])
+print("Température à 0, 180, 359, 360,361 et 540° : ", T[0], T[180], T[359], T[360], T[361],T[540])
 
 plt.figure(2)
 plt.plot(angle, T, label='T', color='red')
